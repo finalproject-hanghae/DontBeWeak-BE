@@ -1,2 +1,2 @@
 jwt:
-  secret: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHN
+  secret: ${{ secrets.JWT_SECRET_KEY }}
