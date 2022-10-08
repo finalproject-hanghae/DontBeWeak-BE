@@ -5,6 +5,10 @@ import com.finalproject.dontbeweak.auth.UserDetailsImpl;
 import com.finalproject.dontbeweak.dto.pill.*;
 import com.finalproject.dontbeweak.exception.CustomException;
 import com.finalproject.dontbeweak.exception.ErrorCode;
+import com.finalproject.dontbeweak.model.User;
+import com.finalproject.dontbeweak.model.pill.Pill;
+import com.finalproject.dontbeweak.repository.UserRepository;
+import com.finalproject.dontbeweak.repository.pill.PillRepository;
 import com.finalproject.dontbeweak.service.PillService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -20,6 +24,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PillController {
     private final PillService pillService;
+    private final UserRepository userRepository;
+    private final PillRepository pillRepository;
 
     //영양제 등록
     @PostMapping("/schedule")
@@ -38,16 +44,26 @@ public class PillController {
         return ResponseEntity.ok().body(pillList);
     }
 
-    //영양제 복용 완료
+    //영양제 복용 체크, 체크 해제
     @PatchMapping("/schedule/week")
-    @ApiOperation(value = "영양제 복용 완료")
-    public ResponseEntity<PillHistoryResponseDto> donePill(@RequestBody PillHistoryRequestDto pillHistoryRequestDto, @AuthenticationPrincipal UserDetailsImpl userDetails){
-        if (userDetails == null) {
-            throw new CustomException(ErrorCode.NOT_FOUND_USER);
-        } else {
-            PillHistoryResponseDto pillHistoryResponseDto = pillService.donePill(pillHistoryRequestDto, userDetails);
-            return ResponseEntity.ok().body(pillHistoryResponseDto);
+    @ApiOperation(value = "영양제 복용 체크 및 체크 해제")
+    public ResponseEntity<?> donePill(
+            @RequestBody PillHistoryRequestDto pillHistoryRequestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails){
+
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
+                () ->  new CustomException(ErrorCode.NOT_FOUND_USER));
+        Pill pill = pillRepository.findByUser_IdAndProductName(user.getId(), pillHistoryRequestDto.getProductName());
+        boolean pillState = pill.getDone();
+
+        if (pillState == false) {
+            return pillService.donePill(pillHistoryRequestDto, user, pill);
         }
+
+        if (pillState == true){
+            return pillService.undonePill(pillHistoryRequestDto, user, pill);
+        }
+        return null;
     }
 
     //주간 영양제 복용 여부 조회

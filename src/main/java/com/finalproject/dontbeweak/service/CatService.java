@@ -7,6 +7,7 @@ import com.finalproject.dontbeweak.model.User;
 import com.finalproject.dontbeweak.repository.CatImageRepository;
 import com.finalproject.dontbeweak.repository.CatRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.Store;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,11 +18,11 @@ import com.finalproject.dontbeweak.exception.ErrorCode;
 @Service
 @RequiredArgsConstructor
 public class CatService {
-    private final CatRepository catRepository;
-    private final CatImageRepository catImageRepository;
 
     // 최소 레벨
     public static final Integer MIN_LEVEL = 1;
+    private final CatImageRepository catImageRepository;
+    private final CatRepository catRepository;
 
 
     // 새 고양이 생성

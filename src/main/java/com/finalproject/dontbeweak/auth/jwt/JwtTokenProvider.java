@@ -55,6 +55,7 @@ public class JwtTokenProvider {
         this.redisTemplate = redisTemplate;
     }
 
+
     // 사용자 정보를 가지고 AccessToken, RefreshToken을 생성하는 메서드
     public UserResponseDto.TokenInfo generateToken(Authentication authentication) {
 
@@ -68,6 +69,7 @@ public class JwtTokenProvider {
                 .refreshTokenExpirationTime(REFRESH_TOKEN_EXPIRE_TIME)
                 .build();
     }
+
 
     // 액세스 토큰 생성
     public String generateAccessToken(Authentication authentication) {
@@ -90,6 +92,7 @@ public class JwtTokenProvider {
 
         return accessToken;
     }
+
 
     // 리프레시 토큰 생성
     public String generateRefreshToken() {
@@ -116,6 +119,7 @@ public class JwtTokenProvider {
                 .accessTokenExpirationTime(ACCESS_TOKEN_EXPIRE_TIME)
                 .build();
     }
+
 
     // JWT 토큰을 복호화하여 토큰에 들어있는 정보를 꺼내는 메서드
     public Authentication getAuthentication(String accessToken) {
@@ -145,6 +149,7 @@ public class JwtTokenProvider {
         return null;
     }
 
+
     private Claims parseClaims(String accessToken) {
         try {
             return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();
@@ -152,6 +157,7 @@ public class JwtTokenProvider {
             return e.getClaims();
         }
     }
+
 
     public boolean validateAccessToken(String AccessToken) {
         try {
@@ -171,6 +177,7 @@ public class JwtTokenProvider {
         }
         return false;
     }
+
 
     // 토큰 만료 확인 메서드
     public boolean checkExpiredToken(String token) {
@@ -212,6 +219,7 @@ public class JwtTokenProvider {
         return (expiration.getTime() - now);
     }
 
+
     // 만료 토큰 유효 기간
     // 재발급 시 사용된 만료된 얙세스 토큰은 바로 레디스로 저장된다 (blacklist)
     // 3일 간 레디스에 저장된 후 삭제되는데
@@ -235,6 +243,7 @@ public class JwtTokenProvider {
         }
     }
 
+
     // 액세스 토큰 재발급
     public ResponseEntity<?> regenerateAccessTokenProcess(HttpServletResponse httpServletResponse, String accessToken, Response response) {
 
@@ -246,7 +255,6 @@ public class JwtTokenProvider {
 
         // 로그아웃되어 Redis 에 RefreshToken이 존재하지 않는 경우 처리
         if(ObjectUtils.isEmpty(refreshToken)) {
-            System.out.println("==== 리프레시 토큰이 존재하지 않음 ====");
             log.error(ErrorCode.NOT_FOUND_REFRESH_TOKEN.getMessage(), ErrorCode.NOT_FOUND_REFRESH_TOKEN.getStatus());
             return response.fail("잘못된 요청입니다.", HttpStatus.BAD_REQUEST);
         }
@@ -266,11 +274,9 @@ public class JwtTokenProvider {
 
         Authentication newAuthentication = getAuthentication(tokenInfo.getAccessToken());
         SecurityContextHolder.getContext().setAuthentication(newAuthentication);
-        System.out.println("==== 3-3. [PASS] SecurityContext 저장 ====");
 
         // 만료된 AT를 Redis에 저장
         saveAceessTokenBlackList(accessToken);
-        System.out.println("==== Redis에 만료된 Access Token 저장 완료 ====");
 
         return response.success(tokenInfo, "Token 정보가 갱신되었습니다.", HttpStatus.OK);
     }

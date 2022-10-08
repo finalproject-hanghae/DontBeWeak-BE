@@ -11,6 +11,7 @@ import com.finalproject.dontbeweak.model.pill.PillHistory;
 import com.finalproject.dontbeweak.repository.pill.PillHistoryRepository;
 import com.finalproject.dontbeweak.repository.pill.PillRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +32,7 @@ public class PillService {
     private final PillRepository pillRepository;
     private final UserRepository userRepository;
     private final PillHistoryRepository pillHistoryRepository;
+    private final PillHistoryResponseDto pillHistoryResponseDto;
 
     private static final Integer GET_POINT = 10;
 
@@ -64,26 +67,53 @@ public class PillService {
         return pillResponseDtoList;
     }
 
+//    @Transactional
+//    public PillHistoryResponseDto checkPill(PillHistoryRequestDto pillHistoryRequestDto, UserDetailsImpl userDetails) {
+//        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
+//                () ->  new CustomException(ErrorCode.NOT_FOUND_USER));
+//        String productName = pillHistoryRequestDto.getProductName();
+//        Pill pill = pillRepository.findByUser_IdAndProductName(user.getId(), productName);
+//        boolean pillState = pill.getDone();
+//
+//        if (pillState == false) {
+//            donePill(pillHistoryRequestDto, user, pill);
+//
+//        } else if (pillState == true) {
+//            undonePill(pillHistoryRequestDto, user, pill, productName);
+//        }
+//    }
+
     //영양제 복용 완료
     @Transactional
-    public PillHistoryResponseDto donePill(PillHistoryRequestDto pillHistoryRequestDto, UserDetailsImpl userDetails) {
-        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
-                () -> new IllegalArgumentException("회원이 존재하지 않습니다.")
-        );
+    public ResponseEntity<?> donePill(PillHistoryRequestDto pillHistoryRequestDto, User user, Pill pill) {
 
-        String productName = pillHistoryRequestDto.getProductName();
+        int userPoint = user.getPoint();
 
-        Pill pill = pillRepository.findByUser_IdAndProductName(user.getId(), productName);
         pill.donePill();
         pillRepository.save(pill);
 
         PillHistory pillHistory = new PillHistory(user, pill, pillHistoryRequestDto);
         pillHistoryRepository.save(pillHistory);
 
-        int userPoint = user.getPoint();
         user.setPoint(userPoint + GET_POINT);
 
-        return new PillHistoryResponseDto(pill, pillHistory);
+        return pillHistoryResponseDto.done(pillHistory);
+    }
+
+    @Transactional
+    public ResponseEntity<?> undonePill(PillHistoryRequestDto pillHistoryRequestDto, User user, Pill pill) {
+        String productName = pillHistoryRequestDto.getProductName();
+        Long userId = user.getId();
+        LocalDateTime usedAt = pillHistoryRequestDto.getUsedAt();
+        int userPoint = user.getPoint();
+
+        pill.cancelDonePill();
+        // 영양제 기록 삭제
+        pillHistoryRepository.deleteByProductNameAndUser_IdAndUsedAt(productName, userId, usedAt);
+        // 포인트 삭제
+        user.setPoint(userPoint - GET_POINT);
+
+        return pillHistoryResponseDto.undone(pillHistoryRequestDto, pill);
     }
 
     //영양제 복용 여부 초기화

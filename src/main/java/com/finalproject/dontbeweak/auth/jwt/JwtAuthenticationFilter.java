@@ -60,8 +60,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // 토큰에서 Authentication 객체를 가지고 와서 SecurityContext 에 저장
                     Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                    System.out.println("==== 5. [PASS] SecurityContext 저장 ====");
                 } else {
                     log.error(ErrorCode.LOGGED_OUT_TOKEN.getMessage(), ErrorCode.LOGGED_OUT_TOKEN.getStatus());
                     customResponse.fail("잘못된 요청입니다.", HttpStatus.BAD_REQUEST);

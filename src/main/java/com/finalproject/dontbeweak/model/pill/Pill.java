@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Getter
 @Entity
@@ -33,6 +34,9 @@ public class Pill {
     @Column(nullable = false)
     private Boolean done;
 
+    @OneToMany
+    List<PillHistory> pillHistory;
+
     public Pill(User user, PillRequestDto pillRequestDto) {
         this.user = user;
         this.productName = pillRequestDto.getProductName();
@@ -43,6 +47,11 @@ public class Pill {
     public void donePill() {
         this.done = true;
     }
+
+    public void cancelDonePill() {
+        this.done = false;
+    }
+
 
     public void reset(boolean done){
         this.done = done;

@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final CatRepository catRepository;
@@ -43,8 +44,6 @@ public class UserService {
     private final RedisTemplate redisTemplate;
     private final JwtTokenProvider jwtTokenProvider;
     private final Response response;
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
-    private final HttpServletResponse httpServletResponse;
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_TYPE = "Bearer";
